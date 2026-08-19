@@ -7,17 +7,23 @@ const knex = require("../config/db");
 const createReservation = (data, callback) => {
     console.log("[MODEL_CREATE_RESERVATION] Creating reservation with:", JSON.stringify(data, null, 2));
     
-    knex("reservations")
+    const query = knex("reservations")
         .insert({
             member_id: data.member_id,
             book_id: data.book_id,
             status: "Pending",
             reservation_date: knex.raw("NOW()")
-        })
-        .then((result) => {
+        });
+    const resultPromise = ["postgres", "pg"].includes((process.env.DB_DIALECT || "postgres").toLowerCase())
+        ? query.returning("id")
+        : query;
+
+    resultPromise.then((result) => {
             console.log("[MODEL_CREATE_RESERVATION_SUCCESS] Insert result:", JSON.stringify(result, null, 2));
             callback(null, {
-                insertId: result && result[0] ? result[0] : undefined,
+                insertId: result && result[0]
+                    ? (typeof result[0] === "object" ? result[0].id : result[0])
+                    : undefined,
                 affectedRows: 1
             });
         })

@@ -17,12 +17,17 @@ const registerMember = (member, callback) => {
 
     console.log("[MODEL_REGISTER_MEMBER_INSERT] Insert data:", JSON.stringify(insertData, null, 2));
 
-    knex("members")
-        .insert(insertData)
-        .then((result) => {
+    const query = knex("members").insert(insertData);
+    const resultPromise = ["postgres", "pg"].includes((process.env.DB_DIALECT || "postgres").toLowerCase())
+        ? query.returning("id")
+        : query;
+
+    resultPromise.then((result) => {
             console.log("[MODEL_REGISTER_MEMBER_SUCCESS] Insert result:", JSON.stringify(result, null, 2));
             const response = {
-                insertId: result && result[0] ? result[0] : undefined,
+                insertId: result && result[0]
+                    ? (typeof result[0] === "object" ? result[0].id : result[0])
+                    : undefined,
                 affectedRows: 1
             };
             console.log("[MODEL_REGISTER_MEMBER_CALLBACK] Calling callback with:", JSON.stringify(response, null, 2));

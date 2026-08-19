@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import API from "../services/api";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -17,17 +18,7 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:5000/members/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, loginRole })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || "Login Failed");
-            }
+            const { data } = await API.post("/members/login", { ...form, loginRole });
 
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));

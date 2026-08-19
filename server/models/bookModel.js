@@ -35,7 +35,7 @@ const getBookById = (id, callback) => {
 const addBook = (book, callback) => {
     console.log("[MODEL_ADD_BOOK] Adding book:", JSON.stringify(book, null, 2));
     
-    knex("books")
+    const query = knex("books")
         .insert({
             title: book.title,
             author: book.author,
@@ -43,13 +43,16 @@ const addBook = (book, callback) => {
             isbn: book.isbn,
             total_copies: book.total_copies,
             available_copies: book.available_copies
-        })
-        .then((result) => {
+        });
+
+    ["postgres", "pg"].includes((process.env.DB_DIALECT || "postgres").toLowerCase())
+        ? query.returning("id").then((result) => {
             console.log("[MODEL_ADD_BOOK_SUCCESS] Insert result:", JSON.stringify(result, null, 2));
-            callback(null, {
-                insertId: result && result[0] ? result[0] : undefined,
-                affectedRows: 1
-            });
+            callback(null, { insertId: result && result[0] ? result[0].id : undefined, affectedRows: 1 });
+        })
+        : query.then((result) => {
+            console.log("[MODEL_ADD_BOOK_SUCCESS] Insert result:", JSON.stringify(result, null, 2));
+            callback(null, { insertId: result && result[0] ? result[0] : undefined, affectedRows: 1 });
         })
         .catch((err) => {
             console.error("[MODEL_ADD_BOOK_ERROR]", JSON.stringify({

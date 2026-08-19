@@ -4,18 +4,24 @@ const knex = require("../config/db");
 const issueBook = (loan, callback) => {
     console.log("[MODEL_ISSUE_BOOK] Issuing book with:", JSON.stringify(loan, null, 2));
     
-    knex("loans")
+    const query = knex("loans")
         .insert({
             member_id: loan.member_id,
             book_id: loan.book_id,
             issue_date: loan.issue_date,
             due_date: loan.due_date,
             status: "Issued"
-        })
-        .then((result) => {
+        });
+    const resultPromise = ["postgres", "pg"].includes((process.env.DB_DIALECT || "postgres").toLowerCase())
+        ? query.returning("id")
+        : query;
+
+    resultPromise.then((result) => {
             console.log("[MODEL_ISSUE_BOOK_SUCCESS] Insert result:", JSON.stringify(result, null, 2));
             callback(null, {
-                insertId: result && result[0] ? result[0] : undefined,
+                insertId: result && result[0]
+                    ? (typeof result[0] === "object" ? result[0].id : result[0])
+                    : undefined,
                 affectedRows: 1
             });
         })
@@ -37,7 +43,7 @@ const returnBook = (loanId, callback) => {
         .andWhere("status", "!=", "Returned")
         .update({
             status: "Returned",
-            return_date: knex.raw("CURDATE()")
+            return_date: knex.fn.now()
         })
         .then((affectedRows) => {
             callback(null, { affectedRows });

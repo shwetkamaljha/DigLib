@@ -2,18 +2,19 @@ const knex = require("knex");
 
 const DB_DIALECT = (process.env.DB_DIALECT || "postgres").toLowerCase();
 const isPostgres = DB_DIALECT === "postgres" || DB_DIALECT === "pg";
+const postgresConnection = process.env.DATABASE_URL || {
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "postgres",
+    database: process.env.DB_NAME || "digital_library",
+    port: Number(process.env.DB_PORT || 5432),
+    ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
+};
 
 const db = knex({
     client: isPostgres ? "pg" : "mysql2",
     connection: isPostgres
-        ? {
-            host: process.env.DB_HOST || "localhost",
-            user: process.env.DB_USER || "postgres",
-            password: process.env.DB_PASSWORD || "postgres",
-            database: process.env.DB_NAME || "digital_library",
-            port: Number(process.env.DB_PORT || 5432),
-            ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
-        }
+        ? postgresConnection
         : {
             host: process.env.DB_HOST || "localhost",
             user: process.env.DB_USER || "root",

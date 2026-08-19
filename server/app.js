@@ -36,7 +36,15 @@ process.on("uncaughtException", (error) => {
     }, null, 2));
 });
 
-app.use(cors());
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
 console.log("[APP_BOOTSTRAP] CORS middleware added");
 
 app.use(express.json());
